@@ -135,8 +135,8 @@ def BFGS(x, z, inner, text):
     Af[1] = [xnew[1], xnew[2]]
     cf = xnew[-2:]
     plt.figure()
-    plt.scatter(points[:, 0], points[:, 1])
-    plt.scatter(points[inner, 0], points[inner, 1])
+    plt.scatter(z[:, 0], z[:, 1])
+    plt.scatter(z[inner, 0], z[inner, 1])
     ax = plt.axes()
     ax.add_patch(make_ellipse(Af, cf))
     plt.show()
