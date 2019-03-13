@@ -4,16 +4,24 @@ import numpy.linalg
 from matplotlib import patches
 
 
+def constructproblem(x):
+
+    A = np.zeros((2, 2))
+    A[0] = [x[0], x[1]]
+    A[1] = [x[1], x[2]]
+
+    vec = np.array([x[3], x[4]])
+
+    return A, vec
+
+
 def r1(zi, A, c):
     zic = np.matmul((zi - c).T, A)
     return np.matmul(zic, (zi - c)) - 1
 
 
 def f1(x, z, inner):
-    A = np.zeros((2, 2))
-    A[0] = [x[0], x[1]]
-    A[1] = [x[1], x[2]]
-    c = [x[3], x[4]]
+    A, c = constructproblem(x)
     sum = 0
     for i in range(len(z)):
         if i in inner:
@@ -29,10 +37,7 @@ def r2(zi, A, b):
 
 
 def f2(x, z, inner):
-    A = np.zeros((2, 2))
-    A[0] = [x[0], x[1]]
-    A[1] = [x[1], x[2]]
-    b = x[-2:]
+    A, b = constructproblem(x)
     sum = 0
     for i in range(len(z)):
         if i in inner:
@@ -45,16 +50,12 @@ def f2(x, z, inner):
 def grad1(x, z, inner):
     g1 = np.zeros((2, 2))
     g2 = np.zeros(2)
-    A = np.zeros((2, 2))
-    A[0] = [x[0], x[1]]
-    A[1] = [x[1], x[2]]
-    c = [x[3], x[4]]
+    A, c = constructproblem(x)
     for i in range(len(z)):
         r = r1(z[i], A, c)
         if (i in inner and r > 0) or ((i not in inner) and r < 0):
             g1 += 2 * r * np.matmul((z[i] - c), (z[i] - c).transpose())
             g2 += -4 * r * (z[i].T - c) @ A
-
     g = np.array([g1[0, 0], g1[0, 1], g1[1, 1], g2[0], g2[1]])
     return g
 
@@ -78,10 +79,13 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9, text="1"):
     alpha = 1
     amax = np.infty
     amin = 0
+    k = 0
     if text == "1":
         while (f1((x + alpha * p), z, inner) > f1(x, z, inner) + c1 * alpha * np.matmul(grad1(x, z, inner).T, p)) or \
                 (np.matmul(grad1(x + alpha * p, z, inner).T, p) < c2 * np.matmul(grad1(x, z, inner).T, p)):
-            if f1(x + alpha * p, z, inner) > f1(x, z, inner) + c1 * alpha * np.matmul(grad1(x, z, inner).T, p):
+            if k > 20:
+                return alpha
+            elif f1(x + alpha * p, z, inner) > f1(x, z, inner) + c1 * alpha * np.matmul(grad1(x, z, inner).T, p):
                 #print(alpha)
                 amax = alpha
                 alpha = (amax + amin) / 2
@@ -107,18 +111,6 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9, text="1"):
 
     #print(alpha)
     return alpha
-
-
-def get_ellipse(A, c):
-    eigen_values, eigen_vectors = np.linalg.eig(A)
-    principal_axes = np.sqrt(1 / eigen_values)
-
-    vec1 = eigen_vectors[0, :]
-    angle = np.arctan(vec1[0] / vec1[1])
-
-    e1 = patches.Ellipse((c[0], c[1]), 2 * principal_axes[0], 2 * principal_axes[1],
-                         angle=-angle * 180 / np.pi, linewidth=2, fill=False, zorder=2)
-    return e1
 
 
 def make_ellipse(A, c):
@@ -149,7 +141,7 @@ def BFGS(x, z, inner, text):
     ax.add_patch(make_ellipse(Af, cf))
     plt.show()
     if text == "1":
-        while np.linalg.norm(grad1(xnew, z, inner), np.infty) > 10 ** (-5) and n < 51:
+        while np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-5) and n < 100:
             p = - np.matmul(H, grad1(xnew, z, inner))
             #print(p)
             alpha = linesearch_wolfe(z, inner, p, xnew, text="1")
@@ -162,6 +154,7 @@ def BFGS(x, z, inner, text):
             #print(rho)
             if n == 0:
                 H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
+
             temp1 = np.outer(s, y)
             temp2 = np.outer(y, s)
             temp3 = np.outer(s, s)
@@ -199,7 +192,7 @@ plt.figure()
 plt.scatter(points[:, 0], points[:, 1])
 plt.scatter(points[inner, 0], points[inner, 1])
 ax = plt.axes()
-ax.add_patch(get_ellipse(Af, cf))
+ax.add_patch(make_ellipse(Af, cf))
 plt.show()
 
 
