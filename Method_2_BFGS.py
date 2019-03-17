@@ -50,7 +50,7 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     amin = 0
     k = 0
     while ((f2(x + alpha * p, z, inner) > f2(x, z, inner) + c1 * alpha * np.matmul(grad2(x, z, inner), p)) or \
-            (np.matmul(grad2(x + alpha * p, z, inner).T, p) < c2 * np.matmul(grad2(x, z, inner).T, p))) and k < 20:
+            (np.matmul(grad2(x + alpha * p, z, inner).T, p) < c2 * np.matmul(grad2(x, z, inner).T, p))) and k < 10:
         if f2(x + alpha * p, z, inner) > f2(x, z, inner) + c1 * alpha * np.matmul(grad2(x, z, inner), p):
             k += 1
             amax = alpha
@@ -71,7 +71,7 @@ def make_ellipse(A, b):
     principal_axes = np.sqrt(1 / eval)
 
     vec1 = evec[0, :]
-    angle = - np.arctan(vec1[0] / vec1[1]) * 180 / np.pi
+    angle = - np.arctan(vec1[1] / vec1[0]) * 180 / np.pi
 
     c = 1 / 2 * np.linalg.inv(A) @ b
     c = 1 / 2 * np.linalg.inv(A) @ b
@@ -87,13 +87,7 @@ def BFGS(x, z, inner):
     xold = np.array(5 * [np.infty])
     n = 0
     Af, bf = constructproblem(x)
-    plt.figure()
-    plt.scatter(z[:, 0], z[:, 1])
-    plt.scatter(z[inner, 0], z[inner, 1])
-    ax = plt.axes()
-    ax.add_patch(make_ellipse(Af, bf))
-    plt.show()
-    while np.linalg.norm(grad2(xnew, z, inner), 2) > 10 ** (-3) and n < 100:
+    while np.linalg.norm(grad2(xnew, z, inner), 2) > 10 ** (-3) and n < 50:
         p = - np.matmul(H, grad2(xnew, z, inner))
         #print(p)
         alpha = linesearch_wolfe(z, inner, p, xnew)
@@ -113,29 +107,26 @@ def BFGS(x, z, inner):
 
         H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
         #H = np.matmul(np.matmul((np.eye(5) - rho * np.matmul(s, y.T)), H), (np.eye(5) - rho * np.matmul(y, s.T))) + rho * np.matmul(s, s.T)
-        print(H)
         n += 1
+        print(xnew)
     print(n)
     return xnew
 
 
 def generate_points(x):
     A, b = constructproblem(x)
-    c = 1 / 2 * np.linalg.inv(A) @ b
-    points = np.random.multivariate_normal(c, 1 * np.linalg.inv(A), size=500)
+    c = np.zeros(2)
+    points = np.random.multivariate_normal(c, np.eye(2), size=300)
     inner = []
     for i in range(len(points)):
-        if r2(points[i], A, b) <= 0:
+        if r2(points[i], A, np.zeros(2)) <= 0:
             inner.append(i)
     return points, inner
 
 
-c = np.array([2, 2])
-A = 3 * np.eye(2)
-A[0, 1], A[1, 0] = 1, 1
-x = [3, 1, 3, 2, 2]
+x = [3, 1, 1, 0, 0]
 
-x0 = np.array([3, 1, 3, 1.6, 2])
+x0 = np.array([9, 8, 9, 0, 0])
 points, inner = generate_points(x)
 
 def plot_solution(x, z):
@@ -149,6 +140,15 @@ def plot_solution(x, z):
 
 xf = BFGS(x0, points, inner)
 print(xf)
+
+#"""
+A, b = constructproblem(x)
+plt.figure()
+plt.scatter(points[:, 0], points[:, 1])
+plt.scatter(points[inner, 0], points[inner, 1])
+ax = plt.axes()
+ax.add_patch(make_ellipse(A, b))
+#"""
 
 plot_solution(xf, points)
 
