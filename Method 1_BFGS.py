@@ -20,6 +20,10 @@ def r1(zi, A, c):
     return np.matmul(zic, (zi - c)) - 1
 
 
+def rxy(A, c, x, y):
+    return (x - c[0]) * (A[0, 0] * (x - c[0]) + A[0, 1] * (y - c[1])) + (y - c[1]) * (A[1, 0] * (x - c[0]) + A[1, 1] * (y - c[1])) - 1
+
+
 def f1(x, z, inner):
     A, c = constructproblem(x)
     sum = 0
@@ -49,8 +53,8 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     amax = np.infty
     amin = 0
     k = 0
-    while ((f1((x + alpha * p), z, inner) > f1(x, z, inner) + c1 * alpha * np.matmul(grad1(x, z, inner).T, p)) or \
-            (np.matmul(grad1(x + alpha * p, z, inner).T, p) < c2 * np.matmul(grad1(x, z, inner).T, p))) and k < 10:
+    while ((f1((x + alpha * p), z, inner) > f1(x, z, inner) + c1 * alpha * np.matmul(grad1(x, z, inner).T, p)) or
+            (np.matmul(grad1(x + alpha * p, z, inner).T, p) < c2 * np.matmul(grad1(x, z, inner).T, p))) and k < 20:
         if f1(x + alpha * p, z, inner) > f1(x, z, inner) + c1 * alpha * np.matmul(grad1(x, z, inner).T, p):
             amax = alpha
             alpha = (amax + amin) / 2
@@ -69,51 +73,36 @@ def ellipse_eqn_plot1(X, Y, A, c):
     return A[0][0]*(X-c[0])**2+2*A[0][1]*(X-c[0])*(Y-c[1])+A[1][1]*(Y-c[1])**2-1
 
 
-def make_ellipse(A, c):
-    eval, evec = np.linalg.eig(A)
-    principal_axes = np.sqrt(1 / eval)
-
-    vec1 = evec[0, :]
-    angle = - np.arctan(vec1[1] / vec1[0]) * 180 / np.pi
-
-    e1 = patches.Ellipse((c[0], c[1]), 2 * principal_axes[0], 2 * principal_axes[1],
-                         angle=angle, linewidth=2, fill=False, zorder=2)
-    return e1
-
-
-def BFGS(x, z, inner):
+def BFGS(x, z, inner, n=0):
     H = np.eye(5)
     xnew = x
     xold = np.array(5 * [np.infty])
-    n = 0
     while np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-5) and n < 100:
         p = - np.matmul(H, grad1(xnew, z, inner))
-        #print(p)
         alpha = linesearch_wolfe(z, inner, p, xnew)
         xold = xnew
         xnew = xnew + alpha * p
-        print(grad1(xold, z, inner))
-        print(xnew)
         s = xnew - xold
         y = grad1(xnew, z, inner) - grad1(xold, z, inner)
         rho = 1 / np.matmul(y.T, s)
-        #print(rho)
-        #"""
+        if rho > 10 ** 8:
+            print("restart")
+            return BFGS(xnew, z, inner, n=n)
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
-
         temp1 = np.outer(s, y)
         temp2 = np.outer(y, s)
         temp3 = np.outer(s, s)
 
         H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
-        #"""
+        print('n = ', n, "\t x=", xnew)
         n += 1
-    print(n)
+
     return xnew
 
 
 def generate_points(x):
+    A, c = constructproblem(x)
     points = np.random.multivariate_normal(c, 1 * np.linalg.inv(A), size=300)
     inner = []
     for i in range(len(points)):
@@ -134,35 +123,40 @@ def generate_noise(z, scale):
 def plot_solution(xf, points):
     Af, cf = constructproblem(xf)
 
+    minx = min(points[:, 0])
+    maxx = max(points[:, 0])
+
+    miny = min(points[:, 1])
+    maxy = max(points[:, 1])
+
+    x = np.arange(minx, maxx, 0.01)
+    y = np.arange(miny, maxy, 0.01)
+
+    X, Y = np.meshgrid(x, y)
+    Z = rxy(Af, cf, X, Y)
+
     plt.figure()
+
+    plt.contour(X, Y, Z, [0], colors='black')
+
     plt.scatter(points[:, 0], points[:, 1])
     plt.scatter(points[inner, 0], points[inner, 1])
-    ax = plt.axes()
-    ax.add_patch(make_ellipse(Af, cf))
     plt.show()
 
 
-c = np.array([2, 2])
-A = 3 * np.eye(2)
-A[0, 1], A[1, 0] = 1, 1
-x = [3, 1, 3, 2, 2]
+x = [3, 1, -3, 0, 0]
 
-x0 = np.array([6, 2, 2, 1.5, 2])
+x0 = np.array([3, -1, 3, 0, 2])
 points, inner = generate_points(x)
 
-noisy = generate_noise(points, 0)
+noisy = generate_noise(points, 2 * 10 ** (-1))
 
 Af, cf = constructproblem(x0)
-plt.figure()
-plt.scatter(noisy[:, 0], noisy[:, 1])
-plt.scatter(noisy[inner, 0], noisy[inner, 1])
-ax = plt.axes()
-ax.add_patch(make_ellipse(Af, cf))
+plot_solution(x0, points)
 
-xf = BFGS(x0, generate_noise(points, 10 ** (-3)), inner)
+xf = BFGS(x0, generate_noise(points, 10 ** (-3)), inner, 0)
 plot_solution(xf, points)
 
-#print(generate_noise(points, 0.5))
 
 
 
