@@ -43,7 +43,7 @@ def grad1(x, z, inner):
         r = r1(z[i], A, c)
         if (i in inner and r > 0) or ((i not in inner) and r < 0):
             g1 += 2 * r * np.outer((z[i] - c), (z[i] - c))
-            g2 += -4 * r * (z[i].T - c) @ A
+            g2 += -4 * r * (z[i] - c) @ A
     g = np.array([g1[0, 0], g1[0, 1], g1[1, 1], g2[0], g2[1]])
     return g
 
@@ -69,15 +69,11 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     return alpha
 
 
-def ellipse_eqn_plot1(X, Y, A, c):
-    return A[0][0]*(X-c[0])**2+2*A[0][1]*(X-c[0])*(Y-c[1])+A[1][1]*(Y-c[1])**2-1
-
-
 def BFGS(x, z, inner, n=0):
     H = np.eye(5)
     xnew = x
     xold = np.array(5 * [np.infty])
-    while np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-5) and n < 100:
+    while 1 / len(z) * np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-8) and n < 100: #skalerer med antall punkter
         p = - np.matmul(H, grad1(xnew, z, inner))
         alpha = linesearch_wolfe(z, inner, p, xnew)
         xold = xnew
@@ -85,11 +81,12 @@ def BFGS(x, z, inner, n=0):
         s = xnew - xold
         y = grad1(xnew, z, inner) - grad1(xold, z, inner)
         rho = 1 / np.matmul(y.T, s)
-        if rho > 10 ** 8:
-            print("restart")
-            return BFGS(xnew, z, inner, n=n)
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
+        if rho > 10 ** 12:
+            print(n, "restart")
+            return BFGS(xnew, z, inner, n=n+1)
+
         temp1 = np.outer(s, y)
         temp2 = np.outer(y, s)
         temp3 = np.outer(s, s)
@@ -101,9 +98,9 @@ def BFGS(x, z, inner, n=0):
     return xnew
 
 
-def generate_points(x):
+def generate_points(x, size=300):
     A, c = constructproblem(x)
-    points = np.random.multivariate_normal(c, 1 * np.linalg.inv(A), size=300)
+    points = np.random.multivariate_normal(c, 1 * np.linalg.inv(A), size=size)
     inner = []
     for i in range(len(points)):
         if r1(points[i], A, c) <= 0:
@@ -120,7 +117,7 @@ def generate_noise(z, scale):
     return z
 
 
-def plot_solution(xf, points):
+def plot_solution(xf, points, inner, funk):
     Af, cf = constructproblem(xf)
 
     minx = min(points[:, 0])
@@ -133,7 +130,7 @@ def plot_solution(xf, points):
     y = np.arange(miny, maxy, 0.01)
 
     X, Y = np.meshgrid(x, y)
-    Z = rxy(Af, cf, X, Y)
+    Z = funk(Af, cf, X, Y)
 
     plt.figure()
 
@@ -143,19 +140,19 @@ def plot_solution(xf, points):
     plt.scatter(points[inner, 0], points[inner, 1])
     plt.show()
 
+if __name__ == '__main__':
+    x = [3, 1, 3, 0, 0]
 
-x = [3, 1, -3, 0, 0]
+    x0 = np.array([3, -1, 3, 0, 2])
+    points, inner = generate_points(x)
 
-x0 = np.array([3, -1, 3, 0, 2])
-points, inner = generate_points(x)
+    Af, cf = constructproblem(x0)
 
-noisy = generate_noise(points, 2 * 10 ** (-1))
+    points = generate_noise(points, 2 * 10 ** (-1))
+    plot_solution(x0, points, inner, rxy)
 
-Af, cf = constructproblem(x0)
-plot_solution(x0, points)
-
-xf = BFGS(x0, generate_noise(points, 10 ** (-3)), inner, 0)
-plot_solution(xf, points)
+    xf = BFGS(x0, points, inner, 0)
+    plot_solution(xf, points, inner, rxy)
 
 
 

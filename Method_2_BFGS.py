@@ -53,7 +53,7 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     amax = np.infty
     amin = 0
     k = 0
-    while ((f2(x + alpha * p, z, inner) > f2(x, z, inner) + c1 * alpha * np.matmul(grad2(x, z, inner), p)) or \
+    while ((f2(x + alpha * p, z, inner) > f2(x, z, inner) + c1 * alpha * np.matmul(grad2(x, z, inner), p)) or
             (np.matmul(grad2(x + alpha * p, z, inner).T, p) < c2 * np.matmul(grad2(x, z, inner).T, p))) and k < 20:
         if f2(x + alpha * p, z, inner) > f2(x, z, inner) + c1 * alpha * np.matmul(grad2(x, z, inner), p):
             k += 1
@@ -74,6 +74,7 @@ def BFGS(x, z, inner, n=0):
     H = np.eye(5)
     xnew = x
     while np.linalg.norm(grad2(xnew, z, inner), 2) > 10 ** (-5) and n < 100:
+        print(n)
         p = - np.matmul(H, grad2(xnew, z, inner))
         alpha = linesearch_wolfe(z, inner, p, xnew)
         xold = xnew
@@ -82,9 +83,9 @@ def BFGS(x, z, inner, n=0):
         y = grad2(xnew, z, inner) - grad2(xold, z, inner)
         rho = 1 / np.matmul(y.T, s)
         print(rho)
-        if rho > 10 ** 7:
+        if rho > 10 ** 12:
             print("restart")
-            return BFGS(xnew, z, inner, n)
+            return BFGS(xnew, z, inner, n + 1)
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
         temp1 = np.outer(s, y)
@@ -109,12 +110,12 @@ def generate_points(x):
     return points, inner
 
 
-x = [3, 1, -6, 0, 0]
+x = [1, 0, 1, 0, 0]
 
-x0 = np.array([0, 1, -3, 0, 0])
+x0 = np.array([1, 0, 1.2, 0, 0])
 points, inner = generate_points(x)
 
-def plot_solution(xf, points):
+def plot_solution(xf, points, funk):
     Af, cf = constructproblem(xf)
 
     minx = min(points[:, 0])
@@ -127,7 +128,7 @@ def plot_solution(xf, points):
     y = np.arange(miny, maxy, 0.01)
 
     X, Y = np.meshgrid(x, y)
-    Z = rxy_tilde(Af, cf, X, Y)
+    Z = funk(Af, cf, X, Y)
 
     plt.figure()
 
@@ -141,7 +142,7 @@ xf = BFGS(x0, points, inner)
 print(xf)
 
 
-plot_solution(x0, points)
+plot_solution(x0, points, rxy_tilde())
 
-plot_solution(xf, points)
+plot_solution(xf, points, rxy_tilde())
 
