@@ -73,7 +73,7 @@ def BFGS_M2(x, z, inner, n=0):
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
 
-        if rho > 10 ** 10:
+        if rho > 10 ** 8:
             print(n + 1, "restart")
             return BFGS_M2(xnew, z, inner, n=n+1)
 
@@ -89,14 +89,14 @@ def BFGS_M2(x, z, inner, n=0):
     return xnew
 
 if __name__ == '__main__':
-    x = [8, 2, 1, 0, 0]
+    x = [-1, -2, 1, 0, 0]
 
-    x0 = np.array([1, 0, 1, 0, 0])
+    x0 = np.array([0, 1, 0, 0, 0])
     points, inner = generate_points(x, size=300)
 
     Af, cf = constructproblem(x0)
 
-    points = generate_noise(points, 10 ** (-1))
+    points = generate_noise(points, 10 ** (-2))
 
     plot_solution(x0, points, inner, rxy_tilde)
 

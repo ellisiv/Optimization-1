@@ -73,7 +73,7 @@ def BFGS(x, z, inner, n=0):
     H = np.eye(5)
     xnew = x
     xold = np.array(5 * [np.infty])
-    while 1 / len(z) * np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-8) and n < 100: #skalerer med antall punkter
+    while 1 / len(z) * np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-6) and n < 100: #skalerer med antall punkter
         p = - np.matmul(H, grad1(xnew, z, inner))
         alpha = linesearch_wolfe(z, inner, p, xnew)
         xold = xnew
