@@ -144,7 +144,7 @@ if __name__ == '__main__':
     x = [3, 1, 3, 0, 0]
 
     x0 = np.array([3, -1, 3, 0, 2])
-    points, inner = generate_points(x)
+    points, inner = generate_points(x, size=100)
 
     Af, cf = constructproblem(x0)
 
