@@ -95,7 +95,7 @@ def BFGS(x, z, inner, n=0):
         print('n = ', n, "\t x=", xnew)
         n += 1
 
-    return xnew
+    return xnew, n
 
 
 def generate_points(x, size=300):
@@ -117,7 +117,7 @@ def generate_noise(z, scale):
     return z
 
 
-def plot_solution(xf, points, inner, funk):
+def plot_solution(xf, points, inner, funk, n):
     Af, cf = constructproblem(xf)
 
     minx = min(points[:, 0])
@@ -135,24 +135,30 @@ def plot_solution(xf, points, inner, funk):
     plt.figure()
 
     plt.contour(X, Y, Z, [0], colors='black')
-
+    if n == 0:
+        plt.title("Initial guess")
+    else:
+        #plt.title("Ferdig")
+        plt.title('Finished after n= {}'.format(n) + ' iterations')
     plt.scatter(points[:, 0], points[:, 1])
     plt.scatter(points[inner, 0], points[inner, 1])
     plt.show()
+    
+
 
 if __name__ == '__main__':
     x = [3, 1, 3, 0, 0]
 
-    x0 = np.array([3, -1, 3, 0, 2])
-    points, inner = generate_points(x, size=100)
+    x0 = np.array([2, 0, 1, 0, 2])
+    points, inner = generate_points(x, size=500)
 
     Af, cf = constructproblem(x0)
 
     points = generate_noise(points, 2 * 10 ** (-1))
-    plot_solution(x0, points, inner, rxy)
+    plot_solution(x0, points, inner, rxy, 0)
 
-    xf = BFGS(x0, points, inner, 0)
-    plot_solution(xf, points, inner, rxy)
+    xf, nf = BFGS(x0, points, inner, 0)
+    plot_solution(xf, points, inner, rxy, nf)
 
 
 

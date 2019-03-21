@@ -61,7 +61,7 @@ def Wolfe_2(z, inner, p, x, c1=10 ** -4, c2=0.9):
 def BFGS_M2(x, z, inner, n=0):
     H = np.eye(5)
     xnew = x
-    while 1 / len(z) * np.linalg.norm(grad2(xnew, z, inner), 2) > 10 ** (-6) and n < 100:  # skalerer med antall punkter
+    while 1 / len(z) * np.linalg.norm(grad2(xnew, z, inner), 2) > 10 ** (-10) and n < 100:  # skalerer med antall punkter
         p = - np.matmul(H, grad2(xnew, z, inner))
         alpha = Wolfe_2(z, inner, p, xnew)
         xold = xnew
@@ -73,7 +73,7 @@ def BFGS_M2(x, z, inner, n=0):
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
 
-        if rho > 10 ** 8:
+        if rho > 10 ** 17:
             print(n + 1, "restart")
             return BFGS_M2(xnew, z, inner, n=n+1)
 
@@ -86,23 +86,22 @@ def BFGS_M2(x, z, inner, n=0):
         print('n = ', n, "\t x=", xnew)
         n += 1
 
-    return xnew
+    return xnew, n
 
 if __name__ == '__main__':
     x = [0.01, 1, 0.1, 0, 0] #kult problem
 
-    x =[70000, 0.1, 70000, 0, 0]
+    x = [7, 0.1, 7, 0, 0]
 
-    #x0 = np.array([0.01, 1, 0.01, 0, 0])
-    x0=x
-    points, inner = generate_points(x, size=300)
+    x0 = np.array([0.01, 1, 0.01, 0, 0])
+    points, inner = generate_points(x, size=500)
 
     Af, cf = constructproblem(x0)
 
-    points = generate_noise(points, 0)
+    points = generate_noise(points, 2 * 10 ** (-1))
 
-    plot_solution(x0, points, inner, rxy_tilde)
+    plot_solution(x0, points, inner, rxy_tilde, 0)
 
-    xf = BFGS_M2(x0, points, inner, 0)
-    plot_solution(xf, points, inner, rxy_tilde)
+    xf, nf = BFGS_M2(x0, points, inner, 0)
+    plot_solution(xf, points, inner, rxy_tilde, nf)
 
