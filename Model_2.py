@@ -89,14 +89,17 @@ def BFGS_M2(x, z, inner, n=0):
     return xnew
 
 if __name__ == '__main__':
-    x = [10, 1, 4, 0, 0]
+    x = [0.01, 1, 0.1, 0, 0] #kult problem
 
-    x0 = np.array([1, 0, 1, 0, 0])
+    x =[70000, 0.1, 70000, 0, 0]
+
+    #x0 = np.array([0.01, 1, 0.01, 0, 0])
+    x0=x
     points, inner = generate_points(x, size=300)
 
     Af, cf = constructproblem(x0)
 
-    points = generate_noise(points, 10 ** (-2))
+    points = generate_noise(points, 0)
 
     plot_solution(x0, points, inner, rxy_tilde)
 
