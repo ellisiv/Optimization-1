@@ -59,7 +59,7 @@ def Wolfe_2(z, inner, p, x, c1=10 ** -4, c2=0.9):
     return alpha
 
 
-def BFGS_M2(x, z, inner, n=0, gradient_decent=0):
+def BFGS_model_2(x, z, inner, n=0, gradient_decent=0):
     H = np.eye(5)
     xnew = x
     grads = np.zeros(0)
@@ -78,7 +78,7 @@ def BFGS_M2(x, z, inner, n=0, gradient_decent=0):
 
             if rho > 10 ** 17:
                 print(n + 1, "restart")
-                return BFGS_M2(xnew, z, inner, n=n+1)
+                return BFGS_model_2(xnew, z, inner, n=n+1)
 
             temp1 = np.outer(s, y)
             temp2 = np.outer(y, s)
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     plot_solution(x0, points, inner, rxy_tilde, 0)
 
-    xf, nf, gradients = BFGS_M2(x0, points, inner, 0, gradient_decent=1)
+    xf, nf, gradients = BFGS_model_2(x0, points, inner, 0, gradient_decent=1)
     plot_solution(xf, points, inner, rxy_tilde, nf)
     convergence_plot(gradients, 2)
 

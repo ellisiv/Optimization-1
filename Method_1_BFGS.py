@@ -69,7 +69,7 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     return alpha
 
 
-def BFGS(x, z, inner, n=0, gradient_decent=0):
+def BFGS_model_1(x, z, inner, n=0, gradient_decent=0):
     H = np.eye(5)
     xnew = x
     grads = np.zeros(0)
@@ -84,11 +84,6 @@ def BFGS(x, z, inner, n=0, gradient_decent=0):
             rho = 1 / np.matmul(y.T, s)
             if n == 0:
                 H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
-            """
-            if rho > 10 ** 12:
-                print(n, "restart")
-                return BFGS(xnew, z, inner, n=n+1)
-            """
             temp1 = np.outer(s, y)
             temp2 = np.outer(y, s)
             temp3 = np.outer(s, s)
@@ -168,7 +163,7 @@ if __name__ == '__main__':
     points = generate_noise(points, 2 * 10 ** (-1))
     plot_solution(x0, points, inner, rxy, 0)
 
-    xf, nf, gradsf = BFGS(x0, points, inner, 0, gradient_decent=0)
+    xf, nf, gradsf = BFGS_model_1(x0, points, inner, 0, gradient_decent=0)
     plot_solution(xf, points, inner, rxy, nf)
     convergence_plot(gradsf, 1)
 
