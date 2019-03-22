@@ -72,7 +72,7 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
 def BFGS(x, z, inner, n=0):
     H = np.eye(5)
     xnew = x
-    xold = np.array(5 * [np.infty])
+    grads = np.zeros(0)
     while 1 / len(z) * np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-6) and n < 100: #skalerer med antall punkter
         p = - np.matmul(H, grad1(xnew, z, inner))
         alpha = linesearch_wolfe(z, inner, p, xnew)
@@ -83,19 +83,20 @@ def BFGS(x, z, inner, n=0):
         rho = 1 / np.matmul(y.T, s)
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
+        """
         if rho > 10 ** 12:
             print(n, "restart")
             return BFGS(xnew, z, inner, n=n+1)
-
+        """
         temp1 = np.outer(s, y)
         temp2 = np.outer(y, s)
         temp3 = np.outer(s, s)
 
         H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
         print('n = ', n, "\t x=", xnew)
+        grads = np.append(grads, np.linalg.norm(grad1(xnew, z, inner), 2))
         n += 1
-
-    return xnew, n
+    return xnew, n - 1, grads
 
 
 def generate_points(x, size=300):
@@ -143,7 +144,15 @@ def plot_solution(xf, points, inner, funk, n):
     plt.scatter(points[:, 0], points[:, 1])
     plt.scatter(points[inner, 0], points[inner, 1])
     plt.show()
-    
+
+
+def convergence_plot(grads, method=1):
+    n = len(grads)
+    x_grid = np.linspace(0, n - 1, n)
+    plt.figure()
+    plt.plot(x_grid, grads, label=r'$\nabla f_{}$'.format(method))
+    plt.title('Convergence plot for method {}'.format(method))
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -157,8 +166,9 @@ if __name__ == '__main__':
     points = generate_noise(points, 2 * 10 ** (-1))
     plot_solution(x0, points, inner, rxy, 0)
 
-    xf, nf = BFGS(x0, points, inner, 0)
+    xf, nf, gradsf = BFGS(x0, points, inner, 0)
     plot_solution(xf, points, inner, rxy, nf)
+    convergence_plot(gradsf, 1)
 
 
 
