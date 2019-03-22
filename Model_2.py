@@ -59,7 +59,7 @@ def Wolfe_2(z, inner, p, x, c1=10 ** -4, c2=0.9):
     return alpha
 
 
-def BFGS_M2(x, z, inner, n=0):
+def BFGS_M2(x, z, inner, n=0, gradient_decent=0):
     H = np.eye(5)
     xnew = x
     grads = np.zeros(0)
@@ -68,23 +68,23 @@ def BFGS_M2(x, z, inner, n=0):
         alpha = Wolfe_2(z, inner, p, xnew)
         xold = xnew
         xnew = xnew + alpha * p
-        s = xnew - xold
-        y = grad2(xnew, z, inner) - grad2(xold, z, inner)
-        rho = 1 / np.matmul(y.T, s)
+        if not gradient_decent:
+            s = xnew - xold
+            y = grad2(xnew, z, inner) - grad2(xold, z, inner)
+            rho = 1 / np.matmul(y.T, s)
 
-        if n == 0:
-            H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
+            if n == 0:
+                H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
 
-        if rho > 10 ** 17:
-            print(n + 1, "restart")
-            return BFGS_M2(xnew, z, inner, n=n+1)
+            if rho > 10 ** 17:
+                print(n + 1, "restart")
+                return BFGS_M2(xnew, z, inner, n=n+1)
 
-        temp1 = np.outer(s, y)
-        temp2 = np.outer(y, s)
-        temp3 = np.outer(s, s)
+            temp1 = np.outer(s, y)
+            temp2 = np.outer(y, s)
+            temp3 = np.outer(s, s)
 
-        H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
-        print(grad2(xnew, z, inner))
+            H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
         print('n = ', n, "\t x=", xnew)
         n += 1
         grads = np.append(grads, np.linalg.norm(grad2(xnew, z, inner), 2))
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     plot_solution(x0, points, inner, rxy_tilde, 0)
 
-    xf, nf, gradients = BFGS_M2(x0, points, inner, 0)
+    xf, nf, gradients = BFGS_M2(x0, points, inner, 0, gradient_decent=1)
     plot_solution(xf, points, inner, rxy_tilde, nf)
     convergence_plot(gradients, 2)
 

@@ -69,7 +69,7 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     return alpha
 
 
-def BFGS(x, z, inner, n=0):
+def BFGS(x, z, inner, n=0, gradient_decent=0):
     H = np.eye(5)
     xnew = x
     grads = np.zeros(0)
@@ -78,21 +78,22 @@ def BFGS(x, z, inner, n=0):
         alpha = linesearch_wolfe(z, inner, p, xnew)
         xold = xnew
         xnew = xnew + alpha * p
-        s = xnew - xold
-        y = grad1(xnew, z, inner) - grad1(xold, z, inner)
-        rho = 1 / np.matmul(y.T, s)
-        if n == 0:
-            H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
-        """
-        if rho > 10 ** 12:
-            print(n, "restart")
-            return BFGS(xnew, z, inner, n=n+1)
-        """
-        temp1 = np.outer(s, y)
-        temp2 = np.outer(y, s)
-        temp3 = np.outer(s, s)
+        if not gradient_decent:
+            s = xnew - xold
+            y = grad1(xnew, z, inner) - grad1(xold, z, inner)
+            rho = 1 / np.matmul(y.T, s)
+            if n == 0:
+                H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
+            """
+            if rho > 10 ** 12:
+                print(n, "restart")
+                return BFGS(xnew, z, inner, n=n+1)
+            """
+            temp1 = np.outer(s, y)
+            temp2 = np.outer(y, s)
+            temp3 = np.outer(s, s)
 
-        H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
+            H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
         print('n = ', n, "\t x=", xnew)
         grads = np.append(grads, np.linalg.norm(grad1(xnew, z, inner), 2))
         n += 1
@@ -150,7 +151,8 @@ def convergence_plot(grads, method=1):
     n = len(grads)
     x_grid = np.linspace(0, n - 1, n)
     plt.figure()
-    plt.plot(x_grid, grads, label=r'$\nabla f_{}$'.format(method))
+    #plt.yscale('log')
+    plt.loglog(x_grid, grads, label=r'$\nabla f_{}$'.format(method))
     plt.title('Convergence plot for method {}'.format(method))
     plt.show()
 
@@ -166,7 +168,7 @@ if __name__ == '__main__':
     points = generate_noise(points, 2 * 10 ** (-1))
     plot_solution(x0, points, inner, rxy, 0)
 
-    xf, nf, gradsf = BFGS(x0, points, inner, 0)
+    xf, nf, gradsf = BFGS(x0, points, inner, 0, gradient_decent=0)
     plot_solution(xf, points, inner, rxy, nf)
     convergence_plot(gradsf, 1)
 

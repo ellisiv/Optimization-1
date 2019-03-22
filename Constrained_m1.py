@@ -107,18 +107,11 @@ def BFGS_constr(x, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2, n=0
         rho = 1 / np.matmul(y.T, s)
         if n == 0:
             H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
-        '''
-        if rho > 10 ** 12:
-            #print(n, "restart")
-            return BFGS_constr(xnew, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2, n=n+1, TOL = TOL)
-        '''
         temp1 = np.outer(s, y)
         temp2 = np.outer(y, s)
         temp3 = np.outer(s, s)
 
         H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
-        
-        #print('n = ', n, "\t x=", xnew)
         n += 1
     return xnew                              
 
