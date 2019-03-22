@@ -69,11 +69,11 @@ def linesearch_wolfe(z, inner, p, x, c1=10 ** -4, c2=0.9):
     return alpha
 
 
-def BFGS_model_1(x, z, inner, n=0, gradient_decent=0):
+def BFGS_model_1(x, z, inner, TOL, n=0, gradient_decent=0):
     H = np.eye(5)
     xnew = x
     grads = np.zeros(0)
-    while 1 / len(z) * np.linalg.norm(grad1(xnew, z, inner), 2) > 10 ** (-6) and n < 100: #skalerer med antall punkter
+    while 1 / len(z) * np.linalg.norm(grad1(xnew, z, inner), 2) > TOL and n < 100: #skalerer med antall punkter
         p = - np.matmul(H, grad1(xnew, z, inner))
         alpha = linesearch_wolfe(z, inner, p, xnew)
         xold = xnew
@@ -114,7 +114,7 @@ def generate_noise(z, scale):
     return z
 
 
-def plot_solution(xf, points, inner, funk, n):
+def plot_solution(xf, points, inner, funk, n, Metode):
     Af, cf = constructproblem(xf)
 
     minx = min(points[:, 0])
@@ -136,7 +136,7 @@ def plot_solution(xf, points, inner, funk, n):
         plt.title("Initial guess")
     else:
         #plt.title("Ferdig")
-        plt.title('Finished after n= {}'.format(n) + ' iterations')
+        plt.title('Metode {}'.format(Metode)+' finished after n= {}'.format(n) + ' iterations')
     plt.scatter(points[:, 0], points[:, 1])
     plt.scatter(points[inner, 0], points[inner, 1])
     plt.show()
@@ -161,10 +161,10 @@ if __name__ == '__main__':
     Af, cf = constructproblem(x0)
 
     points = generate_noise(points, 2 * 10 ** (-1))
-    plot_solution(x0, points, inner, rxy, 0)
+    plot_solution(x0, points, inner, rxy, 0, Metode=1)
 
-    xf, nf, gradsf = BFGS_model_1(x0, points, inner, 0, gradient_decent=0)
-    plot_solution(xf, points, inner, rxy, nf)
+    xf, nf, gradsf = BFGS_model_1(x0, points, inner, 10 ** (-6), gradient_decent=0)
+    plot_solution(xf, points, inner, rxy, nf, Metode=1)
     convergence_plot(gradsf, 1)
 
 
