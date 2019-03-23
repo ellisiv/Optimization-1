@@ -62,8 +62,8 @@ def Wolfe_2(z, inner, p, x, c1=10 ** -4, c2=0.9):
 def BFGS_model_2(x, z, inner, TOL, n=0, gradient_decent=0):
     H = np.eye(5)
     xnew = x
-    grads = np.zeros(0)
-    while 1 / len(z) * np.linalg.norm(grad2(xnew, z, inner), 2) > TOL and n < 100:  # skalerer med antall punkter
+    funks = np.zeros(0)
+    while 1 / len(z) * np.linalg.norm(grad2(xnew, z, inner), 2) > TOL:  # skalerer med antall punkter
         p = - np.matmul(H, grad2(xnew, z, inner))
         alpha = Wolfe_2(z, inner, p, xnew)
         xold = xnew
@@ -83,16 +83,16 @@ def BFGS_model_2(x, z, inner, TOL, n=0, gradient_decent=0):
             H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
         print('n = ', n, "\t x=", xnew)
         n += 1
-        grads = np.append(grads, np.linalg.norm(grad2(xnew, z, inner), 2))
+        funks = np.append(funks, f2(xnew, z, inner))
 
-    return xnew, n-1, grads
+    return xnew, n-1, funks
 
 if __name__ == '__main__':
     #x = [0.01, 1, 0.1, 0, 0] #kult problem
 
     x = [3, 1, 3, 0, 0]
 
-    x0 = np.array([1, 0, 1, 0, 0])
+    x0 = np.array([5, 1, 0.1, 0, 0])
     points, inner = generate_points(x, size=500)
 
     Af, cf = constructproblem(x0)
