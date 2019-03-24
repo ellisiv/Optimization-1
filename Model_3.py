@@ -59,3 +59,64 @@ def grad3(x, z, inner):
             g2 += -4 * r * (z[i] - c) @ A
     g = np.array([g1[0, 0], g1[0, 1], g1[1, 1], g2[0], g2[1]])
     return g
+
+def generate_points3(x, size=300):
+    c, rho, d, sigma = construct_circle_params(x)
+    #points = np.random.multivariate_normal(c, 1 * np.linalg.inv(A), size=size) #endre til ish uniform 
+    points = np.random.uniform(-3,3,((size,2))) #Evt endre hvor stort området skal være i stedet for -2, 2
+    inner_a = []
+    inner_b = []
+    for i in range(len(points)):
+        #Trenger to ekstra if-setninger, én for den andre sirkelen og én hvis den er i begge
+        #Lag litt omstendelig med fire if-setninger først 
+        if r3(points[i], c, rho) <= 0 and r3(points[i], d, sigma) >= 0:
+            inner_a.append(i)
+        elif r3(points[i], d, sigma) <= 0 and r3(points[i], c, rho) >= 0:
+            inner_b.append(i)
+        elif r3(points[i], d, sigma) <= 0 and r3(points[i], c, rho) <= 0:
+            #tilfeldig utvelgelse:
+            a = np.random.randint(0,1)
+            if a < 0.5:
+                inner_a.append(i)
+            else:
+                inner_b.append(i)
+                
+    return points, inner_a, inner_b #returner inner_a og inner_b feks. 
+
+def plot_solution3(xf, points, inner, funk, n, Metode):
+    Af, cf = constructproblem(xf)
+
+    minx = min(points[:, 0])
+    maxx = max(points[:, 0])
+
+    miny = min(points[:, 1])
+    maxy = max(points[:, 1])
+
+    x = np.arange(minx, maxx, 0.01)
+    y = np.arange(miny, maxy, 0.01)
+
+    X, Y = np.meshgrid(x, y)
+    Z = funk(Af, cf, X, Y)
+
+    plt.figure()
+
+    plt.contour(X, Y, Z, [0], colors='black')
+    if n == 0:
+        plt.title("Initial guess")
+    else:
+        #plt.title("Ferdig")
+        plt.title('Metode {}'.format(Metode)+' finished after n= {}'.format(n) + ' iterations')
+    plt.scatter(points[:, 0], points[:, 1])
+    plt.scatter(points[inner, 0], points[inner, 1])
+    plt.show()
+    
+if __name__ == '__main__':
+    
+    x = [2,-1,1,0,1,1.5]
+    
+    points, inner_a, inner_b = generate_points3(x, size=300)
+    
+    x0 = np.array([4, 1, 3, 0, 0])
+    
+    plot_solution(x0, points, inner_a, rxy_tilde, 0, 2)
+    plot_solution(x0, points, inner_b, rxy_tilde, 0, 2)
