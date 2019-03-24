@@ -87,17 +87,20 @@ def wolfe_constr(x, p, B, gradB, f, gradf, beta, constraints, z, inner, g1 = 1, 
 def BFGS_constr(x, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2, n=0, TOL=10**(-6)):
     H = np.eye(len(x))
     xnew = x
+    alpha_new = 0
+    alpha_old = np.inf
     #B_vals = np.zeros(0)
     #B_vals = np.append(B_vals, B(xnew, f, beta, constraints, z, inner, g1, g2))
     
     f_vals = np.zeros(0)
     f_vals = np.append(f_vals, f(xnew, z, inner))
     
-    while np.linalg.norm(gradB(xnew, beta, grad_f, z, inner, g1, g2), 2) > TOL and n < 50:
+    while np.abs(alpha_old - alpha_new) > TOL and n < 100:
         p = - np.matmul(H, gradB(xnew, beta, grad_f, z, inner, g1, g2))
-        alpha = wolfe_constr(xnew, p, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2)
+        alpha_old = alpha_new
+        alpha_new = wolfe_constr(xnew, p, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2)
         xold = xnew
-        xnew = xnew + alpha * p
+        xnew = xnew + alpha_new * p
         s = xnew - xold
         print("grad B: ", gradB(xnew, beta, grad_f, z, inner, g1, g2))
         y = gradB(xnew, beta, grad_f, z, inner, g1, g2) - gradB(xold, beta, grad_f, z, inner, g1, g2)
@@ -124,12 +127,12 @@ def beta_optimization(x, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g
     f_val_list = np.zeros(0)
     iter_sum = 0
     
-    while np.linalg.norm(gradB(xnew, beta_new, grad_f, z, inner, g1, g2), 2) > np.max([10 **(-6), beta_new]) and k < 10:
+    while np.linalg.norm(gradB(xnew, beta_new, grad_f, z, inner, g1, g2), 2) > np.max([10 **(-6), beta_new]) and k < 40:
         #Tried with TOL = beta_new
-        print("betaløkke,", k)
         beta_old = beta_new
-        xnew, itr, f_vals = BFGS_constr(xnew, B, gradB, f, grad_f, beta_old, constraints, z, inner, g1, g2, n+1, 10 **3 * TOL)
+        xnew, itr, f_vals = BFGS_constr(xnew, B, gradB, f, grad_f, beta_old, constraints, z, inner, g1, g2, n+1, TOL)
         beta_new = 0.9 * beta_old #annen oppdatering? 
+        print("betaløkke,", k, "beta: ", beta_new)
         iter_sum += itr
         f_val_list = np.append(f_val_list, f_vals[-1])
         k += 1
@@ -163,7 +166,6 @@ if __name__ == '__main__':
     #x = [0.008, 1, 0.008, 0, 0] #not so nice problem
     
     x = [0.008, 1, 0.008, 0, 0]
-    x_test = [0.19, 0.17, 0.20, 0.017, 0.12]
     
     c = [c1, c2, c3, c4, c5]
     
@@ -173,19 +175,18 @@ if __name__ == '__main__':
 
 
     points = generate_noise(points, 2 * 10 ** (-1))
-    plot_solution(x_test, points, inner, rxy_tilde, 0, 2)
+    plot_solution(x, points, inner, rxy_tilde, 0, 2)
     
     print(B_func(x, f2, 0.1, c, points, inner))
     print(B_func(x0, f2, 0.1, c, points, inner))
 
     #xf = BFGS_constr(x0, B_func, grad_B, f2, grad2, 5, c, points, inner, 0.1, 1000, n = 0, TOL = 10 **(-3)) #general_BFGS(x, f, gradf, n=0, TOL=10**(-6))
     
-    '''
-    xf, itr, b_vals = beta_optimization(x0, B_func, grad_B, f2, grad2, 1, c, points, inner, 0.1, 1000, n=0, TOL=10**(-6))
+    xf, itr, b_vals = beta_optimization(x0, B_func, grad_B, f2, grad2, 1, c, points, inner, 0.1, 1000, n=0, TOL=10**(-11))
 
     convergence_plot_constr(b_vals)
     plot_solution(xf, points, inner, rxy_tilde, np.sum(itr), 2)
-    '''
+    
 
     
     
