@@ -69,13 +69,16 @@ def generate_points3(x, size=300):
     for i in range(len(points)):
         #Trenger to ekstra if-setninger, én for den andre sirkelen og én hvis den er i begge
         #Lag litt omstendelig med fire if-setninger først 
-        if r3(points[i], c, rho) <= 0 and r3(points[i], d, sigma) >= 0:
+        if ((r3(points[i], c, rho) <= 0) and (r3(points[i], d, sigma) >= 0)):
+            print("bare a")
             inner_a.append(i)
-        elif r3(points[i], d, sigma) <= 0 and r3(points[i], c, rho) >= 0:
+        elif ((r3(points[i], d, sigma) <= 0) and (r3(points[i], c, rho) >= 0)):
+            print("bare b")
             inner_b.append(i)
-        elif r3(points[i], d, sigma) <= 0 and r3(points[i], c, rho) <= 0:
+        elif ((r3(points[i], d, sigma) <= 0) and (r3(points[i], c, rho) <= 0)):
             #tilfeldig utvelgelse:
-            a = np.random.randint(0,1)
+            a = np.random.uniform(0,1)
+            print(a)
             if a < 0.5:
                 inner_a.append(i)
             else:
@@ -112,7 +115,7 @@ def plot_solution3(xf, points, inner, funk, n, Metode):
     
 if __name__ == '__main__':
     
-    x = [2,-1,1,0,1,1.5]
+    x = [1,0,2,0,1,1.5]
     
     points, inner_a, inner_b = generate_points3(x, size=300)
     
