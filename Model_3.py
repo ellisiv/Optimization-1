@@ -36,13 +36,11 @@ def rxy(A, c, x, y):
 
 def f3(x, z, a, b):
     c, rho, d, sigma = construct_circle_params(x)
-    sum = 0
 
+    sum = 0
     for i in range(len(z)):
-        if i in a and i not in b:
+        if i in a:
             sum += max(r3(z[i], c, rho), 0) ** 2 + min(r3(z[i], d, sigma), 0) ** 2
-        elif i in a:
-            sum += max(r3(z[i], c, rho), 0) ** 2 + max(r3(z[i], d, sigma), 0) ** 2
         elif i in b:
             sum += min(r3(z[i], c, rho), 0) ** 2 + max(r3(z[i], d, sigma), 0) ** 2
         else:
