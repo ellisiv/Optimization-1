@@ -50,20 +50,7 @@ def f3(x, z, a, b):
     return sum
 
 
-def grad3_tull(x, z, inner):
-    g1 = np.zeros((2, 2))
-    g2 = np.zeros(2)
-    A, c = constructproblem(x)
-    for i in range(len(z)):
-        r = r1(z[i], A, c)
-        if (i in inner and r > 0) or ((i not in inner) and r < 0):
-            g1 += 2 * r * np.outer((z[i] - c), (z[i] - c))
-            g2 += -4 * r * (z[i] - c) @ A
-    g = np.array([g1[0, 0], g1[0, 1], g1[1, 1], g2[0], g2[1]])
-    return g
-
-
-def grad3(x,z,inner_a, inner_b):
+def grad3(x, z, inner_a, inner_b):
     c, rho, d, sigma = construct_circle_params(x)
     g1 = np.zeros(2)
     g2 = 0
@@ -120,6 +107,59 @@ def generate_points3(x, size=300):
                 inner_b.append(i)
                 
     return points, inner_a, inner_b #returner inner_a og inner_b feks. 
+
+
+def Wolfe_3(z, inner_a, inner_b, p, x, c1=10 ** -4, c2=0.9):
+    alpha = 1
+    amax = np.infty
+    amin = 0
+    k = 0
+    while ((f3((x + alpha * p), z, inner_a, inner_b) > f3(x, z, inner_a, inner_b) + c1 * alpha * np.matmul(grad3(x, z, inner_a, inner_b).T, p)) or
+            (np.matmul(grad3(x + alpha * p, z, inner_a, inner_b).T, p) < c2 * np.matmul(grad3(x, z, inner_a, inner_b).T, p))) and k < 20:
+        if f3(x + alpha * p, z, inner_a, inner_b) > f2(x, z, inner_a, inner_b) + c1 * alpha * np.matmul(grad3(x, z, inner_a, inner_b).T, p):
+            amax = alpha
+            alpha = (amax + amin) / 2
+            k += 1
+        else:
+            k += 1
+            amin = alpha
+            if amax == np.infty:
+                alpha = alpha * 2
+            else:
+                alpha = (amax + amin)/2
+    return alpha
+
+def BFGS_model_3(x, z, inner_a, inner_b, TOL, n=0, gradient_decent=0):
+    
+    H = np.eye(6) #endres til 6?
+    xnew = x
+    funks = np.zeros(0)
+    while 1 / len(z) * np.linalg.norm(grad3(xnew, z, inner_a, inner_b), 2) > TOL:  # skalerer med antall punkter
+        #her må du ta inn grad3
+        p = - np.matmul(H, grad2(xnew, z, inner_a, inner_b))
+        alpha = Wolfe_3(z, inner_a, inner_b, p, xnew) #du må nok definere en Wolfe_3 også 
+        xold = xnew
+        xnew = xnew + alpha * p
+        if not gradient_decent:
+            s = xnew - xold
+            y = grad3(xnew, z, inner_a, inner_b) - grad2(xold, z, inner_a, inner_b)
+            rho = 1 / np.matmul(y.T, s)
+
+            if n == 0:
+                H = np.matmul(y.T, s) / np.matmul(y.T, y) * H
+
+            temp1 = np.outer(s, y)
+            temp2 = np.outer(y, s)
+            temp3 = np.outer(s, s)
+
+            H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
+        print('n = ', n, "\t x=", xnew)
+        n += 1
+        funks = np.append(funks, f3(xnew, z, inner_a, inner_b))
+
+    return xnew, n-1, funks
+
+
 
 def plot_solution3(xf, points, inner_a, inner_b, funk, n, Metode): #bør ta inn inner_a og inner_b
     c, rho, d, sigma = construct_circle_params(xf) #endret
