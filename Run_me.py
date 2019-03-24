@@ -19,8 +19,8 @@ def model_1_BFGS_unconstrained_nice_problem():
     x = [3, 1, 3, 0, 0]
     x0 = [1, 0, 1, 0, 0]
 
-    z, inner = generate_points(x, size=500)
-    z = generate_noise(z, 2 * 10 ** -1)
+    z, inner = generate_points(x, size=500, scale=0.7)
+    z = generate_noise(z, 1 * 10 ** -1)
 
     plot_solution(x0, z, inner, rxy, 0, Metode=1)
 
@@ -35,8 +35,8 @@ def model_2_BFGS_unconstrained_nice_problem():
     x = [3, 1, 3, 0, 0]
     x0 = [1, 0, 1, 0, 0]
 
-    z, inner = generate_points(x, size=500)
-    z = generate_noise(z, 2 * 10 ** -1)
+    z, inner = generate_points(x, size=500, scale=0.5)
+    z = generate_noise(z, 1 * 10 ** -1)
 
     plot_solution(x0, z, inner, rxy_tilde, 0, Metode=2)
 
@@ -67,8 +67,8 @@ def model_1_Grad_Decent_unconstrained_nice_problem():
     x = [3, 1, 3, 0, 0]
     x0 = [1, 0, 1, 0, 0]
 
-    z, inner = generate_points(x, size=500)
-    z = generate_noise(z, 2 * 10 ** -1)
+    z, inner = generate_points(x, size=500, scale=0.7)
+    z = generate_noise(z, 1 * 10 ** -1)
 
     plot_solution(x0, z, inner, rxy, 0, Metode=1)
 
@@ -96,7 +96,7 @@ def model_2_Grad_Decent_unconstrained_nice_problem():
 #model_1_BFGS_unconstrained_nice_problem()
 #model_2_BFGS_unconstrained_nice_problem()
 #model_2_BFGS_unconstrained_not_so_nice_problem()
-#model_1_Grad_Decent_unconstrained_nice_problem()
+model_1_Grad_Decent_unconstrained_nice_problem()
 #model_2_Grad_Decent_unconstrained_nice_problem()
 
 
