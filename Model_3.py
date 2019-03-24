@@ -28,11 +28,13 @@ def construct_circle_params(x):
 def r3(zi, center, radius):
     return np.linalg.norm((zi - center), 2) ** 2 - radius ** 2
 
-"""
+'''
 def rxy(A, c, x, y):
     return (x - c[0]) * (A[0, 0] * (x - c[0]) + A[0, 1] * (y - c[1])) + (y - c[1]) * (A[1, 0] * (x - c[0]) + A[1, 1] * (y - c[1])) - 1
-"""
+'''
 
+def rxy3(x,y,c,rho):
+    return (x - c[0]) **2 + (y - c[1]) **2 -rho**2
 
 def f3(x, z, a, b):
     c, rho, d, sigma = construct_circle_params(x)
@@ -86,11 +88,11 @@ def generate_points3(x, size=300):
                 
     return points, inner_a, inner_b #returner inner_a og inner_b feks. 
 
-def plot_solution3(xf, points, inner, funk, n, Metode):
-    Af, cf = constructproblem(xf)
+def plot_solution3(xf, points, inner_a, inner_b, funk, n, Metode): #bør ta inn inner_a og inner_b
+    c, rho, d, sigma = construct_circle_params(xf) #endret
 
-    minx = min(points[:, 0])
-    maxx = max(points[:, 0])
+    minx = min(points[:, 0]) #kan også settes til -3, 3 osv, siden det er der vi har definert punktene våre
+    maxx = max(points[:, 0]) #men kanskje like greit å bare beholde
 
     miny = min(points[:, 1])
     maxy = max(points[:, 1])
@@ -99,18 +101,26 @@ def plot_solution3(xf, points, inner, funk, n, Metode):
     y = np.arange(miny, maxy, 0.01)
 
     X, Y = np.meshgrid(x, y)
-    Z = funk(Af, cf, X, Y)
+    #Z = funk(Af, cf, X, Y) #denne bør endres, her har du faktisk sirkelen din
+    Z_a = funk(X,Y, c, rho)
+    Z_b = funk(X,Y, d, sigma)
+    #du vil ha to av dem, og det vil være f3 som sendes inn? 
+    #Du må lage en rxy3 
+    #tidligere har rxy tatt inn A, c, x, y
+    #altså bør rxy3 ta inn c, rho, x, y -> tror det er sirkelligningen (eller er ganske sikker)
 
     plt.figure()
 
-    plt.contour(X, Y, Z, [0], colors='black')
+    plt.contour(X, Y, Z_a, [0], colors='red')
+    plt.contour(X, Y, Z_b, [0], colors='green')
     if n == 0:
         plt.title("Initial guess")
     else:
         #plt.title("Ferdig")
         plt.title('Metode {}'.format(Metode)+' finished after n= {}'.format(n) + ' iterations')
-    plt.scatter(points[:, 0], points[:, 1])
-    plt.scatter(points[inner, 0], points[inner, 1])
+    plt.scatter(points[:, 0], points[:, 1], c = 'blue')
+    plt.scatter(points[inner_a, 0], points[inner_a, 1], c = 'red')#legg til en til av denne. 
+    plt.scatter(points[inner_b, 0], points[inner_b, 1], c = 'green')
     plt.show()
     
 if __name__ == '__main__':
@@ -123,3 +133,4 @@ if __name__ == '__main__':
     
     plot_solution(x0, points, inner_a, rxy_tilde, 0, 2)
     plot_solution(x0, points, inner_b, rxy_tilde, 0, 2)
+    plot_solution3(x, points, inner_a, inner_b, rxy3, 0, 3)
