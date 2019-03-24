@@ -84,7 +84,7 @@ def BFGS_constr(x, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2, n=0
     f_vals = np.zeros(0)
     f_vals = np.append(f_vals, f(xnew, z, inner))
     
-    while np.linalg.norm(gradB(xnew, beta, grad_f, z, inner, g1, g2), 2) > TOL and n < 100:
+    while np.linalg.norm(gradB(xnew, beta, grad_f, z, inner, g1, g2), 2) > TOL and n < 50:
         p = - np.matmul(H, gradB(xnew, beta, grad_f, z, inner, g1, g2))
         alpha = wolfe_constr(xnew, p, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2)
         xold = xnew
@@ -99,6 +99,7 @@ def BFGS_constr(x, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g2, n=0
         temp3 = np.outer(s, s)
 
         H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
+        print("n = ", n, "\t x = ", xnew)
         n += 1
         
         #B_vals = np.append(B_vals, B(xnew, f, beta, constraints, z, inner, g1, g2))
@@ -111,18 +112,18 @@ def beta_optimization(x, B, gradB, f, grad_f, beta, constraints, z, inner, g1, g
     beta_new = beta
     #b_val_list = np.zeros(0)
     f_val_list = np.zeros(0)
-    iter_list = np.zeros(0)
+    iter_sum = 0
     
     while np.linalg.norm(gradB(xnew, beta_new, grad_f, z, inner, g1, g2), 2) > np.max([10 **(-6), beta_new]) and n < 25:
         #Tried with TOL = beta_new
         beta_old = beta_new
-        xnew, itr, f_vals = BFGS_constr(xnew, B, gradB, f, grad_f, beta_old, constraints, z, inner, g1, g2, n, 10 **3 * TOL)
+        xnew, itr, f_vals = BFGS_constr(xnew, B, gradB, f, grad_f, beta_old, constraints, z, inner, g1, g2, 0, 10 **3 * TOL)
         beta_new = 0.1 * beta_old #annen oppdatering? 
-        iter_list = np.append(iter_list, itr)
+        iter_sum += itr
         f_val_list = np.append(f_val_list, f_vals[-1])
         n += 1
         
-    return xnew, iter_list, f_val_list
+    return xnew, iter_sum, f_val_list
 
 def convergence_plot_constr(grads):
     n = len(grads)
@@ -142,32 +143,28 @@ if __name__ == '__main__':
     
     x = [0.008, 1, 0.008, 0, 0]
     
-    c = [c1,c2,c3,c4,c5]
+    c = [c1, c2, c3, c4, c5]
     
     x0 = np.array([4, 1, 3, 0, 0])
-    points, inner = generate_points(x, size = 300)
+    points, inner = generate_points(x, size=300)
 
-    #Af, cf = constructproblem(x0)
 
-    #points = generate_noise(points, 2 * 10 ** (-1))
+    points = generate_noise(points, 2 * 10 ** (-1))
     plot_solution(x0, points, inner, rxy_tilde, 0, 2)
     
-    print(B_func(x,f2,0.1,c,points, inner))
-    print(B_func(x0,f2,0.1,c,points, inner))
+    print(B_func(x, f2, 0.1, c, points, inner))
+    print(B_func(x0, f2, 0.1, c, points, inner))
 
-    #xf = BFGS_constr(x0, B_func, grad_B, f2, grad2, 5, c, points, inner, 0.1, 1000, n = 0, TOL = 10 **(-3)) #general_BFGS(x, f, gradf, n=0, TOL=10**(-6))
-    
-    '''
     xf, itr, b_vals = beta_optimization(x0, B_func, grad_B, f2, grad2, 1, c, points, inner, 0.1, 1000, n=0, TOL=10**(-6))
     print(xf)
     print(itr)
     print(b_vals)
     print("len(b_vals): ", len(b_vals))
-    
+
+
     convergence_plot_constr(b_vals)
     
     plot_solution(xf, points, inner, rxy_tilde, np.sum(itr), 2)
-    '''
 
     
     
