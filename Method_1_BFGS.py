@@ -95,9 +95,9 @@ def BFGS_model_1(x, z, inner, TOL, n=0, gradient_decent=0):
     return xnew, n - 1, funks
 
 
-def generate_points(x, size=300):
+def generate_points(x, size=300, scale=1):
     A, c = constructproblem(x)
-    points = np.random.multivariate_normal(c, 1 * np.linalg.inv(A), size=size)
+    points = np.random.multivariate_normal(c, scale * np.linalg.inv(A), size=size)
     inner = []
     for i in range(len(points)):
         if r1(points[i], A, c) <= 0:
@@ -133,10 +133,10 @@ def plot_solution(xf, points, inner, funk, n, Metode):
 
     plt.contour(X, Y, Z, [0], colors='black')
     if n == 0:
-        plt.title("Initial guess")
+        plt.title("Initial guess for Model {}".format(Metode))
     else:
         #plt.title("Ferdig")
-        plt.title('Metode {}'.format(Metode)+' finished after n= {}'.format(n) + ' iterations')
+        plt.title('Model {}'.format(Metode)+' finished after n= {}'.format(n) + ' iterations')
     plt.scatter(points[:, 0], points[:, 1])
     plt.scatter(points[inner, 0], points[inner, 1])
     plt.show()
@@ -148,8 +148,9 @@ def convergence_plot(grads, method=1):
     plt.figure()
     #plt.yscale('log')
     plt.ylim(min(grads), max(grads))
-    plt.loglog(x_grid, grads, label=r'$\nabla f_{}$'.format(method))
-    plt.title('Convergence plot for method {}'.format(method))
+    plt.plot(x_grid, grads, label=r'$f_{}$'.format(method)+'(x)')
+    plt.title('Convergence plot for Model {}'.format(method))
+    plt.xlabel("iterations")
     plt.legend()
     plt.show()
 
