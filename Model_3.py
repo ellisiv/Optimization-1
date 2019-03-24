@@ -53,33 +53,33 @@ def f3(x, z, a, b):
 def grad3(x, z, inner_a, inner_b):
     c, rho, d, sigma = construct_circle_params(x)
     g1 = np.zeros(2)
-    g2 = 0
+    g2 = np.zeros(1)
     g3 = np.zeros(2)
-    g4 = 0
+    g4 = np.zeros(1)
     
     for i in range(len(z)):
         ra = r3(z[i], c, rho) 
         rb = r3(z[i], d, sigma)
         
         if (i in inner_a):
-            g1 = g1 -4 * np.max(ra,0) * (z[i] - c)
+            g1 = g1 - 4 * np.max(ra,0) * (z[i] - c)
             g2 = g2 - 4 * rho * np.max(ra,0)
             g3 = g3 - 4 * np.min(rb,0) * (z[i] - d)
             g4 = g4 - 4 * sigma * np.min(rb,0)
         
         if (i in inner_b):
-            g1 = g1 -4 * np.min(ra,0) * (z[i] - c)
+            g1 = g1 - 4 * np.min(ra,0) * (z[i] - c)
             g2 = g2 - 4 * rho * np.min(ra,0)
             g3 = g3 - 4 * np.max(rb,0) * (z[i] - d)
             g4 = g4 - 4 * sigma * np.max(rb,0)
         
         else:
-            g1 = g1 -4 * np.min(ra,0) * (z[i] - c)
+            g1 = g1 - 4 * np.min(ra,0) * (z[i] - c)
             g2 = g2 - 4 * rho * np.min(ra,0)
             g3 = g3 - 4 * np.min(rb,0) * (z[i] - d)
             g4 = g4 - 4 * sigma * np.min(rb,0)
     
-    g = np.array(g1[0], g1[1], g2, g3[0], g3[1], g4)
+    g = np.array([g1[0], g1[1], g2[0], g3[0], g3[1], g4[0]])
     return g
 
 def generate_points3(x, size=300):
@@ -116,7 +116,7 @@ def Wolfe_3(z, inner_a, inner_b, p, x, c1=10 ** -4, c2=0.9):
     k = 0
     while ((f3((x + alpha * p), z, inner_a, inner_b) > f3(x, z, inner_a, inner_b) + c1 * alpha * np.matmul(grad3(x, z, inner_a, inner_b).T, p)) or
             (np.matmul(grad3(x + alpha * p, z, inner_a, inner_b).T, p) < c2 * np.matmul(grad3(x, z, inner_a, inner_b).T, p))) and k < 20:
-        if f3(x + alpha * p, z, inner_a, inner_b) > f2(x, z, inner_a, inner_b) + c1 * alpha * np.matmul(grad3(x, z, inner_a, inner_b).T, p):
+        if f3(x + alpha * p, z, inner_a, inner_b) > f3(x, z, inner_a, inner_b) + c1 * alpha * np.matmul(grad3(x, z, inner_a, inner_b).T, p):
             amax = alpha
             alpha = (amax + amin) / 2
             k += 1
@@ -134,15 +134,16 @@ def BFGS_model_3(x, z, inner_a, inner_b, TOL, n=0, gradient_decent=0):
     H = np.eye(6) #endres til 6?
     xnew = x
     funks = np.zeros(0)
-    while 1 / len(z) * np.linalg.norm(grad3(xnew, z, inner_a, inner_b), 2) > TOL:  # skalerer med antall punkter
+    while 1 / len(z) * np.linalg.norm(grad3(xnew, z, inner_a, inner_b), 2) > TOL and n < 40:  # skalerer med antall punkter
+        print(grad3(xnew, z, inner_a, inner_b))
         #her må du ta inn grad3
-        p = - np.matmul(H, grad2(xnew, z, inner_a, inner_b))
+        p = - np.matmul(H, grad3(xnew, z, inner_a, inner_b))
         alpha = Wolfe_3(z, inner_a, inner_b, p, xnew) #du må nok definere en Wolfe_3 også 
         xold = xnew
         xnew = xnew + alpha * p
         if not gradient_decent:
             s = xnew - xold
-            y = grad3(xnew, z, inner_a, inner_b) - grad2(xold, z, inner_a, inner_b)
+            y = grad3(xnew, z, inner_a, inner_b) - grad3(xold, z, inner_a, inner_b)
             rho = 1 / np.matmul(y.T, s)
 
             if n == 0:
@@ -152,7 +153,7 @@ def BFGS_model_3(x, z, inner_a, inner_b, TOL, n=0, gradient_decent=0):
             temp2 = np.outer(y, s)
             temp3 = np.outer(s, s)
 
-            H = (np.eye(5) - rho * temp1) @ H @ (np.eye(5) - rho * temp2) + rho * temp3
+            H = (np.eye(6) - rho * temp1) @ H @ (np.eye(6) - rho * temp2) + rho * temp3
         print('n = ', n, "\t x=", xnew)
         n += 1
         funks = np.append(funks, f3(xnew, z, inner_a, inner_b))
@@ -198,12 +199,16 @@ def plot_solution3(xf, points, inner_a, inner_b, funk, n, Metode): #bør ta inn 
     
 if __name__ == '__main__':
     
-    x = [1,0,2,0,1,1.5]
+    x = [1,1,1,-2,-1,1]
     
     points, inner_a, inner_b = generate_points3(x, size=300)
     
-    x0 = np.array([4, 1, 3, 0, 0])
+    x0 = [-2,-1,1,1,1,1]
     
-    plot_solution(x0, points, inner_a, rxy_tilde, 0, 2)
-    plot_solution(x0, points, inner_b, rxy_tilde, 0, 2)
-    plot_solution3(x, points, inner_a, inner_b, rxy3, 0, 3)
+    #plot_solution(x0, points, inner_a, rxy_tilde, 0, 2)
+    #plot_solution(x0, points, inner_b, rxy_tilde, 0, 2)
+    
+    xf, k, funks = BFGS_model_3(x0, points, inner_a, inner_b, 10 **(-2))
+    
+    plot_solution3(x0, points, inner_a, inner_b, rxy3, 0, 3)
+    plot_solution3(xf, points, inner_a, inner_b, rxy3, k, 3)
